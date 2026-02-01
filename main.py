@@ -35,7 +35,7 @@ llm = OllamaLLM(
     model="gpt-oss:120b-cloud",
     temperature=0
 )
-#response = llm.invoke("Quel est le sens de la vie ?")
+#Response = llm.invoke("Quel est le sens de la vie ?")
 # print(response)
 
 parser = PydanticOutputParser(pydantic_object=ResearchResponse)
