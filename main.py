@@ -1,44 +1,46 @@
+import requests
 from dotenv import load_dotenv
-from pydantic import BaseModel
-from langchain_openai import ChatOpenAI
-
+from langchain.agents import create_agent
+from langchain.tools  import tool
 from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
+
 load_dotenv()
+@tool('get_weather', description="Return weather information for a given city.", return_direct=False)
+def get_weather(city: str) -> str:
+    try:
+        # On demande le format 2 qui est plus "verbeux" et sans emojis bizarres
+        response = requests.get(f"https://wttr.in/{city}?format=%l:+%C+%t", timeout=10)
+        
+        if response.status_code == 200:
+            # Exemple de retour : "Paris: Partly cloudy +8°C"
+            return response.text.strip()
+        return "Error: Weather service unavailable."
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-""" Example usage of Groq LLM with LangChain 
-llm = ChatGroq(
-    model="qwen/qwen3-32b",
-    temperature=0,
-    max_tokens=None,
-    reasoning_format="parsed",
-    timeout=None,
-    max_retries=2,
-  
+
+# print(get_weather.invoke("Paris"))
+llm = ChatGroq(model="llama-3.1-8b-instant")
+
+agent = create_agent(
+    model= llm ,
+    tools=[get_weather],
+    system_prompt= "You are a helpful assistant that provides weather information."
 )
 
-ai_msg = llm.invoke("Explique la théorie de la relativité restreinte en termes simples.")
-print(ai_msg.content)
-"""
-## local solutio with Ollama
+# Remplacez votre bloc de fin par celui-ci :
+# response = agent.invoke({
+#     'messages': [('user', 'What is the weather like in Paris today?')]
+# })
 
-class ResearchResponse(BaseModel):
-    topic: str
-    summary: str
-    sources: list[str]
-    tools_used: list[str]
-    
+response = agent.invoke({
+'messages': [
+{'role': 'user', 'content': 'What is the weather like in Paris?'}
+]
+})
 
-llm = OllamaLLM(
-    model="gpt-oss:120b-cloud",
-    temperature=0
-)
-#Response = llm.invoke("Quel est le sens de la vie ?")
-# print(response)
-
-parser = PydanticOutputParser(pydantic_object=ResearchResponse)
-
-
-
+print (response)
+# print("---------------------------------------------------------------------")
+print(response['messages'][-1].content)

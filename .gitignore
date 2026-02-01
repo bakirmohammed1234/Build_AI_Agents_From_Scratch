@@ -1,2 +1,4 @@
 MyEnv/
 .env
+main2.py
+__pycache__/
