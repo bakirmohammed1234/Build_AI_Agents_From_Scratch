@@ -1,51 +1,19 @@
 import requests
 from dotenv import load_dotenv
 from langchain.agents import create_agent
-from langchain.tools  import tool, ToolRuntime
+# from langchain.tools  import ToolRuntime
 # from langchain_ollama import OllamaLLM
 # from langchain_ollama import ChatOllama
+from tools import get_weather, locate_user
 from langchain_groq import ChatGroq
 from langchain.chat_models import init_chat_model
-from dataclasses import dataclass
+from dataClassFormat import Context, ResponseFormat
 from langgraph.checkpoint.memory import InMemorySaver
 load_dotenv()
 
-@dataclass
-class Context:
-    user_id: str
-
-@dataclass
-class ResponseFormat:
-    summary: str
-    temperature_celsius: float
-    temperature_fahrenheit: float
-    humidity : float
 
 
-@tool('get_weather', description="Return weather information for a given city.", return_direct=False)
-def get_weather(city: str) -> str:
-    try:
-        # On demande le format 2 qui est plus "verbeux" et sans emojis bizarres
-        response = requests.get(f"https://wttr.in/{city}?format=%l:+%C+%t", timeout=10)
-        
-        if response.status_code == 200:
-            # Exemple de retour : "Paris: Partly cloudy +8°C"
-            return response.text.strip()
-        return "Error: Weather service unavailable."
-    except Exception as e:
-        return f"Error: {str(e)}"
 
-@tool('locate_user', description="Look Up a user's city based  on context.")    
-def locate_user(runtime: ToolRuntime[Context]):
-    match runtime.context.user_id:
-        case "ABC123":
-            return "Vienna"
-        case "XYZ456":
-            return "London"
-        case "HJKL111":
-            return "Paris"
-        case _:
-            return "Unknown"
 
 
 # print(get_weather.invoke("Paris"))
